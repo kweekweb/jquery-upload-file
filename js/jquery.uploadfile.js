@@ -22,6 +22,7 @@
             returnType: null,
             allowDuplicates: true,
             duplicateStrict: false,
+            blacklistedTypes: "",
             allowedTypes: "*",
             //For list of acceptFiles
             // http://stackoverflow.com/questions/11832930/html-input-file-accept-attribute-file-type-csv
@@ -77,6 +78,7 @@
             doneStr: "Done",
             multiDragErrorStr: "Multiple File Drag &amp; Drop is not allowed.",
             extErrorStr: "is not allowed. Allowed extensions: ",
+            extErrorStr2: "is not allowed.",
             duplicateErrorStr: "is not allowed. File already exists.",
             sizeErrorStr: "is not allowed. Allowed Max size: ",
             uploadErrorStr: "Upload is not allowed",
@@ -359,7 +361,13 @@
                 var fileName = s.fileName.replace("[]", "");
 				var fileListStr="";                
                 
-                for (var i = 0; i < files.length; i++) {
+				for (var i = 0; i < files.length; i++) {
+				
+				if (isBlacklistedFileType(obj, s, files[i].name)) {
+				    if (s.showError) $("<div class='" + s.errorClass + "'><b>" + files[i].name + "</b> " + s.extErrorStr2 + "</div>").appendTo(
+                        obj.errorLog);
+				    return;
+				}
                 if (!isFileTypeAllowed(obj, s, files[i].name)) {
                     if (s.showError) $("<div><font color='red'><b>" + files[i].name + "</b> " + s.extErrorStr + s.allowedTypes + "</font></div>").appendTo(obj.errorLog);
                     continue;
@@ -397,7 +405,13 @@
 
 
         function serializeAndUploadFiles(s, obj, files) {
-            for(var i = 0; i < files.length; i++) {
+            for (var i = 0; i < files.length; i++) {
+                if (isBlacklistedFileType(obj, s, files[i].name)) {
+                    if (s.showError) $("<div class='" + s.errorClass + "'><b>" + files[i].name + "</b> " + s.extErrorStr2 + "</div>").appendTo(
+                        obj.errorLog);
+                    return;
+                }
+
                 if(!isFileTypeAllowed(obj, s, files[i].name)) {
                     if(s.showError) $("<div class='" + s.errorClass + "'><b>" + files[i].name + "</b> " + s.extErrorStr + s.allowedTypes + "</div>").appendTo(obj.errorLog);
                     continue;
@@ -451,6 +465,18 @@
                 ajaxFormSubmit(form, ts, pd, fileArray, obj, files[i]);
                 obj.fileCounter++;
             }
+        }
+
+        function isBlacklistedFileType(obj, s, fileName)
+        {
+            var fileExtensions = s.blacklistedTypes.toLowerCase().split(/[\s,]+/g);
+            var ext = fileName.split('.').pop().toLowerCase();
+            if (s.blacklistedTypes == "*" || jQuery.inArray(ext, fileExtensions) >= 0)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         function isFileTypeAllowed(obj, s, fileName) {
@@ -543,6 +569,14 @@
                     var filenameStr = $(this).val();
                     var flist = [];
                     fileArray.push(filenameStr);
+
+                    if (isBlacklistedFileType(obj, s, filenameStr))
+                    {
+                        if (s.showError) $("<div class='" + s.errorClass + "'><b>" + filenameStr + "</b> " + s.extErrorStr2 + "</div>").appendTo(
+                            obj.errorLog);
+                        return;
+                    }
+
                     if(!isFileTypeAllowed(obj, s, filenameStr)) {
                         if(s.showError) $("<div class='" + s.errorClass + "'><b>" + filenameStr + "</b> " + s.extErrorStr + s.allowedTypes + "</div>").appendTo(
                             obj.errorLog);
